@@ -1,0 +1,49 @@
+workflows:
+  ios-workflow:
+    name: Gestor de Cobros - iOS
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - appstore_credentials # crea este grupo en Codemagic con tus credenciales de Apple
+      vars:
+        BUNDLE_ID: "com.gestorcobros.gestorCobros"
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Instalar dependencias de Flutter
+        script: flutter packages pub get
+      - name: Instalar pods de iOS
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Configurar firma automática (ios-signing)
+        script: |
+          xcode-project use-profiles
+      - name: Compilar la app para iOS
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - samm85299@gmail.com
+        notify:
+          success: true
+          failure: true
+      # Descomenta este bloque una vez tengas cuenta de Apple Developer de pago
+      # para publicar automáticamente en TestFlight:
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
