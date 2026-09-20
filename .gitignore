@@ -1,6 +1,5 @@
 # Miscellaneous
 .claude/
-ios-signing/
 *.class
 *.log
 *.pyc
