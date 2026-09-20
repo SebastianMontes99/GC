@@ -1,0 +1,41 @@
+name: Build iOS (IPA sin firmar)
+
+# Compila la app en un runner macOS de GitHub y publica un .ipa SIN firmar.
+# La firma la hace Sideloadly en tu PC con tu Apple ID (gratis, vence a los 7 días).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Compilar para iOS (sin firma)
+        run: flutter build ios --release --no-codesign
+
+      - name: Empaquetar .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/Runner.app
+          zip -qr gestor_cobros.ipa Payload
+
+      - name: Publicar .ipa como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: gestor_cobros-ipa
+          path: gestor_cobros.ipa
+          retention-days: 14
